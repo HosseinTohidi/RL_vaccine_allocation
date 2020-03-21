@@ -6,7 +6,7 @@ Created on Tue Mar 17 16:00:11 2020
 """
 
 import sys
-sys.path.insert(0, "C:\\Users\\atohidi\\CLINICAL-TRIAL\\Chapter2")
+# sys.path.insert(0, "C:\\Users\\atohidi\\CLINICAL-TRIAL\\Chapter2")
 import pandas as pd
 import numpy as np
 import random
@@ -39,11 +39,16 @@ parser.add_argument('--log-interval', type=int, default=10, metavar='N',
 args, unknown = parser.parse_known_args()
 
 
-file_path = "C:\\Users\\atohidi\\CLINICAL-TRIAL\\Chapter2\\data\\"
+file_path = "./data/"
 # read parameters from a file and create the initial_state of system
 file_name = "G-20.txt"
 number_of_age_group = 2
 groups_num, totalPopulation, initialinfeactions, contact_rates, vaccineEfficacy, omega, gamma, H, RS = read_file(file_path+file_name, 10000, num_age_group=number_of_age_group)        
+
+# assign seeds
+random.seed(args.seed)
+np.random.seed(args.seed)
+torch.random.manual_seed(args.seed)
 
 #make 2 equal group
 totalPopulation = [160, 160]
@@ -90,17 +95,18 @@ def random_state():
     return to_state(time_cmp, state)
     
 class env_new:
-    def __init__(self, state):
-        self.state = copy.deepcopy(state)
-        self.clock = np.argmax(extract_time_state(state)[0])
-        
+    def __init__(self, initial_state):
+        self.initial_state = copy.deepcopy(initial_state)
+        # self.clock = np.argmax(extract_time_state(state)[0]) #Reza: why we need this?
+
     def reset(self):
-        self.state = initial_state  #self.state0
+        self.state = copy.deepcopy(self.initial_state)  #self.state0
         self.clock = 0
         return self.state    
     
     def step(self, action):
-        
+
+        #Reza: Move these functions outside of step() since their definition each time will add some overhead
         def random_allocation(S0, E0, n): # S0 and E0 are int number in each group
             S0, E0, n = int(S0), int(E0), int(n)
             l = list(np.arange(S0+E0))
@@ -245,8 +251,9 @@ class Actor(nn.Module):
     # this class defines a policy network with two layer NN
     def __init__(self):
         super(Actor, self).__init__()
-        self.affine1 = nn.Linear(len_state, 2056)
-        self.affine2 = nn.Linear(2056, groups_num)
+        self.affine1 = nn.Linear(len_state, 256)
+        self.affine2= nn.Linear(256, 256)
+        self.affine3 = nn.Linear(256, groups_num)
 
     def forward(self, x):
         ''' do the forward pass and return a probability over actions
@@ -256,7 +263,8 @@ class Actor(nn.Module):
                 prob: a probability distribution ->shape: batch_size X 20
         '''       
         x = F.relu(self.affine1(x))
-        action_scores = self.affine2(x)
+        x = F.relu(self.affine2(x))
+        action_scores = self.affine3(x)
         
         return action_scores
     
@@ -284,20 +292,21 @@ actor = Actor()
 critic = Critic()
 
 # create optimizers
-actor_optim = optim.Adam(actor.parameters(), lr=1e-3)
+actor_optim = optim.Adam(actor.parameters(), lr=1e-3) #Reza: these lrs are ok for initial testing, but should be smaller for getting better results e.g. 1e-4
 critic_optim = optim.Adam(critic.parameters(), lr=1e-3)
 
 
 def select_action(state, variance = 1, temp = 10):
     # this function selects stochastic actions based on the policy probabilities    
-    state = torch.from_numpy(np.array(state)).float().unsqueeze(0)
+    state = torch.from_numpy(np.array(state)).float().unsqueeze(0)   #Reza: this might be a bit faster torch.tensor(state,dtype=torch.float32).unsqueeze(0)
     action_scores = actor(state)
     prob = F.softmax(action_scores/temp, dim=1) #
     #print('***',prob)
     m = Multinomial(vaccine_supply, prob[0]) 
     action = m.sample()
     log_prob = m.log_prob(action)
-    entropy = -(log_prob * prob).sum(1, keepdim=True)
+    # entropy = -(log_prob * prob).sum(1, keepdim=True) #Reza: this is not correct calc for entorpy
+    entropy = - torch.sum(torch.log(prob) * prob, axis=-1)
     return action.numpy(), log_prob, entropy
 
 # multiple rollout 
@@ -382,6 +391,7 @@ def train2(states,rewards,log_probs, entropies):
     rewards_path = []
     log_probs_paths = [] 
     avg_reward_path = []
+    entropies_path = []
     for batch in range(len(rewards)):
         R = 0
         P = 0
@@ -395,6 +405,8 @@ def train2(states,rewards,log_probs, entropies):
 
             #print(P)
         avg_reward_path.append(np.mean(rewards_path))
+        entropies_path.append(torch.mean(torch.stack(entropies[batch])))
+
     log_probs_paths = torch.stack(log_probs_paths)
     #rewards_path: np.array(|batch|X|episod|): 5 X 15, each element is a reward value
     #log_probs_paths:np.array(|batch|X|episod|): 5 X 15, each element is a tensor
@@ -405,10 +417,11 @@ def train2(states,rewards,log_probs, entropies):
     #log_probs_paths = torch.stack(tuple(log_probs_paths.flatten())) # tensor of size 75    
     value = critic(states.view(-1,len_state).float())  #.float is added because I got the following error     
     # take a backward step for actor
-    actor_loss = -torch.mean(((rewards_path.view(batchSize*num_steps) -value.detach().squeeze()) * log_probs_paths)- 10000 * torch.tensor(entropies).view(batchSize*num_steps))  #
-    print('&&', 'actor_loss:', -torch.mean(((rewards_path.view(batchSize*num_steps) -value.detach().squeeze()) * log_probs_paths)))
-    #actor_loss -=  10000 * torch.tensor(entropies).view(batchSize*num_steps)
-    print('actor_loss - entropy_loss', actor_loss)
+    entropy_loss = torch.mean(torch.stack(entropies_path))
+    actor_loss = -torch.mean(((rewards_path.view(batchSize*num_steps) -value.detach().squeeze()) * log_probs_paths)-\
+                             0 * entropy_loss #Reza: I set it to zero for testing the case when two groups are similar
+                             ) #Reza: when two groups are similar, after 1000 train steps they converge to stochastic policy
+
     actor_optim.zero_grad()
     actor_loss.backward()
     actor_optim.step()
@@ -422,7 +435,15 @@ def train2(states,rewards,log_probs, entropies):
     critic_optim.zero_grad()
     critic_loss.backward()
     critic_optim.step()
-    return value, np.mean(avg_reward_path)
+
+    result = {}
+    result['rew'] = np.mean(avg_reward_path)
+    result['actor_loss'] = actor_loss.item()
+    result['critic_loss'] = critic_loss.item()
+    result['ent_loss'] = entropy_loss.item()
+    result['value'] = torch.mean(value).item()
+
+    return result
 
 
 
@@ -432,24 +453,30 @@ rws = []
 torchMean = []
 
 import time
-for i_episode in range(10000):
-    batch_states, batch_rewards, batch_log_probs, batch_entropies = [], [], [], []
-    t0 = time.time()
-    for ii in range(batchSize):
-        states, rewards, log_probs, entropies = rollout(myenv)
-        #print(rewards)
-        batch_states.append(states)
-        batch_rewards.append(rewards)
-        batch_log_probs.append(log_probs)
-        batch_entropies.append(entropies)
-    
-    value, avg_raward_path = train2(batch_states, batch_rewards, batch_log_probs,batch_entropies)
-    rws.append(avg_raward_path)
+def train_all(budget):
+    for i_episode in range(budget):
+        batch_states, batch_rewards, batch_log_probs, batch_entropies = [], [], [], []
+        t0 = time.time()
+        for ii in range(batchSize):
+            states, rewards, log_probs, entropies = rollout(myenv)
+            #print(rewards)
+            batch_states.append(states)
+            batch_rewards.append(rewards)
+            batch_log_probs.append(log_probs)
+            batch_entropies.append(entropies)
 
-    torchMean.append(torch.mean(value).item())
-    print(f'Episode {i_episode}\t average reward path: {round(avg_raward_path,2)}\t torch mean: {round(torch.mean(value).item(),2)} \telapsed time: {time.time()-t0}')
+        result = train2(batch_states, batch_rewards, batch_log_probs,batch_entropies)
+        rws.append(result['rew'])
 
+        torchMean.append(result['value'])
 
+        if i_episode%20==0:
+            print(i_episode, result)
+        # print(f'Episode {i_episode}\t average reward path: {round(avg_raward_path,2)}\t torch mean: {round(torch.mean(value).item(),2)} \telapsed time: {time.time()-t0}')
+
+# import cProfile
+# cProfile.run('train_all()')
+train_all(50000)
 
 import matplotlib.pyplot as plt
 plt.plot(rws)

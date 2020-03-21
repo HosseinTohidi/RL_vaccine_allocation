@@ -1,0 +1,205 @@
+Run results for 1000 train steps with 1 rollout per train step
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   321841    0.252    0.000    3.981    0.000 <__array_function__ internals>:2(amin)
+   321841    0.337    0.000    4.301    0.000 <__array_function__ internals>:2(any)
+     6000    0.008    0.000    0.109    0.000 <__array_function__ internals>:2(argmax)
+   321841    0.288    0.000    2.314    0.000 <__array_function__ internals>:2(argmin)
+   321841    0.347    0.000    1.587    0.000 <__array_function__ internals>:2(concatenate)
+     2000    0.003    0.000    0.083    0.000 <__array_function__ internals>:2(mean)
+        1    0.000    0.000  124.045  124.045 <string>:1(<module>)
+    24000    0.009    0.000    0.013    0.000 __init__.py:116(is_tensor)
+     2000    0.010    0.000    0.031    0.000 __init__.py:20(_make_grads)
+     2000    0.010    0.000    3.336    0.002 __init__.py:44(backward)
+     6000    0.003    0.000    0.025    0.000 _asarray.py:16(asarray)
+     2000    0.001    0.000    0.015    0.000 _asarray.py:88(asanyarray)
+        3    0.000    0.000    0.000    0.000 _collections_abc.py:302(__subclasshook__)
+        7    0.000    0.000    0.000    0.000 _collections_abc.py:392(__subclasshook__)
+     2000    0.016    0.000    0.062    0.000 _methods.py:134(_mean)
+   321841    0.177    0.000    2.855    0.000 _methods.py:36(_sum)
+     2000    0.008    0.000    0.009    0.000 _methods.py:50(_count_reduce_items)
+     1000    0.001    0.000    0.001    0.000 _reduction.py:6(get_enum)
+    30000    0.011    0.000    0.038    0.000 abc.py:137(__instancecheck__)
+     15/3    0.000    0.000    0.000    0.000 abc.py:141(__subclasscheck__)
+     2000    0.241    0.000    0.904    0.000 adam.py:49(step)
+     6000    0.027    0.000    0.255    0.000 categorical.py:102(sample)
+     6000    0.113    0.000    0.216    0.000 categorical.py:44(__init__)
+     6000    0.008    0.000    0.198    0.000 categorical.py:82(logits)
+     6000    0.003    0.000    0.005    0.000 categorical.py:90(param_shape)
+460841/334841    1.457    0.000    4.355    0.000 copy.py:132(deepcopy)
+    42000    0.004    0.000    0.004    0.000 copy.py:190(_deepcopy_atomic)
+     7000    0.053    0.000    0.518    0.000 copy.py:210(_deepcopy_list)
+   418841    0.800    0.000    0.895    0.000 copy.py:252(_keep_alive)
+    18000    0.087    0.000    0.539    0.000 defmatrix.py:117(__new__)
+16064209/12166117   10.408    0.000   11.936    0.000 defmatrix.py:169(__array_finalize__)
+  4583774   13.313    0.000   20.776    0.000 defmatrix.py:191(__getitem__)
+  3898092    1.638    0.000   18.001    0.000 defmatrix.py:378(flatten)
+    12000    0.009    0.000    0.029    0.000 defmatrix.py:937(T)
+    12000    0.021    0.000    0.024    0.000 distribution.py:209(_extended_shape)
+    12000    0.018    0.000    0.018    0.000 distribution.py:24(__init__)
+     6000    0.002    0.000    0.002    0.000 distribution.py:60(batch_shape)
+     6000    0.001    0.000    0.001    0.000 fromnumeric.py:1108(_argmax_dispatcher)
+     6000    0.008    0.000    0.092    0.000 fromnumeric.py:1112(argmax)
+   321841    0.063    0.000    0.063    0.000 fromnumeric.py:1189(_argmin_dispatcher)
+   321841    0.355    0.000    1.745    0.000 fromnumeric.py:1193(argmin)
+   321841    0.080    0.000    0.080    0.000 fromnumeric.py:2232(_any_dispatcher)
+   321841    0.422    0.000    3.615    0.000 fromnumeric.py:2236(any)
+   321841    0.059    0.000    0.059    0.000 fromnumeric.py:2671(_amin_dispatcher)
+   321841    0.486    0.000    3.474    0.000 fromnumeric.py:2676(amin)
+     2000    0.001    0.000    0.001    0.000 fromnumeric.py:3227(_mean_dispatcher)
+     2000    0.015    0.000    0.077    0.000 fromnumeric.py:3231(mean)
+     6000    0.026    0.000    0.069    0.000 fromnumeric.py:42(_wrapit)
+   327841    0.332    0.000    1.475    0.000 fromnumeric.py:55(_wrapfunc)
+   643682    1.752    0.000    6.181    0.000 fromnumeric.py:73(_wrapreduction)
+   643682    0.374    0.000    0.374    0.000 fromnumeric.py:74(<dictcomp>)
+     6000    0.008    0.000    0.101    0.000 functional.py:1202(softmax)
+    14000    0.058    0.000    1.852    0.000 functional.py:1355(linear)
+     1000    0.005    0.000    0.045    0.000 functional.py:2195(mse_loss)
+     7000    0.011    0.000    0.057    0.000 functional.py:26(broadcast_tensors)
+     7000    0.010    0.000    0.136    0.000 functional.py:904(relu)
+     6000    0.007    0.000    0.011    0.000 grad_mode.py:137(__init__)
+     6000    0.010    0.000    0.015    0.000 grad_mode.py:84(__enter__)
+     6000    0.009    0.000    0.020    0.000 grad_mode.py:88(__exit__)
+    14000    0.048    0.000    1.911    0.000 linear.py:86(forward)
+     1000    0.003    0.000    0.039    0.000 loss.py:427(__init__)
+     1000    0.002    0.000    0.047    0.000 loss.py:430(forward)
+     1000    0.002    0.000    0.036    0.000 loss.py:9(__init__)
+22000/8000    0.127    0.000    2.372    0.000 module.py:522(__call__)
+    42000    0.037    0.000    0.037    0.000 module.py:562(__getattr__)
+    10000    0.018    0.000    0.024    0.000 module.py:578(__setattr__)
+     1000    0.006    0.000    0.032    0.000 module.py:69(__init__)
+   321841    0.097    0.000    0.097    0.000 multiarray.py:145(concatenate)
+     6000    0.631    0.000    1.505    0.000 multinomial.py:101(log_prob)
+     6000    0.043    0.000    0.293    0.000 multinomial.py:52(__init__)
+     6000    0.008    0.000    0.273    0.000 multinomial.py:77(logits)
+     6000    0.004    0.000    0.004    0.000 multinomial.py:81(probs)
+     6000    0.094    0.000    0.599    0.000 multinomial.py:89(sample)
+  3922092    1.994    0.000    2.621    0.000 numeric.py:1786(isscalar)
+     2000    0.015    0.000    0.061    0.000 optimizer.py:159(zero_grad)
+   127328    0.078    0.000    0.112    0.000 random.py:224(_randbelow)
+    12000    0.094    0.000    0.257    0.000 random.py:286(sample)
+     2000    0.006    0.000    3.342    0.002 tensor.py:167(backward)
+    12000    0.164    0.000    0.164    0.000 tensor.py:25(wrapped)
+     8008    0.005    0.000    0.007    0.000 tensor.py:464(__hash__)
+    18000    0.010    0.000    0.018    0.000 utils.py:23(<genexpr>)
+     6000    0.020    0.000    0.105    0.000 utils.py:7(broadcast_all)
+     6000    0.022    0.000    0.118    0.000 utils.py:70(clamp_probs)
+     6000    0.010    0.000    0.189    0.000 utils.py:75(probs_to_logits)
+     6000    0.030    0.000    0.265    0.000 utils.py:99(__get__)
+     1000    0.004    0.000    0.086    0.000 v1.py:102(reset)
+     6000    0.527    0.000  113.128    0.019 v1.py:107(step)
+    12000    0.177    0.000    0.509    0.000 v1.py:110(random_allocation)
+     6000    0.304    0.000    2.009    0.000 v1.py:118(apply_vaccine)
+     6000    0.016    0.000    0.104    0.000 v1.py:127(<listcomp>)
+     6000    0.186    0.000    0.334    0.000 v1.py:138(find_reward)
+     6000    5.727    0.001  109.125    0.018 v1.py:143(SEIR)
+  1931046    2.150    0.000   12.586    0.000 v1.py:144(to_array)
+   321841    2.416    0.000    7.340    0.000 v1.py:147(update_state)
+   321841    0.143    0.000    0.143    0.000 v1.py:160(update_time)
+   321841    3.630    0.000   34.201    0.000 v1.py:163(find_next_event)
+   321841    4.686    0.000    4.686    0.000 v1.py:165(<listcomp>)
+   321841   13.055    0.000   81.525    0.000 v1.py:175(_sim_)
+   321841    7.808    0.000    7.808    0.000 v1.py:178(<listcomp>)
+     6000    0.069    0.000    2.095    0.000 v1.py:257(forward)
+     1000    0.010    0.000    0.169    0.000 v1.py:276(forward)
+     6000    0.380    0.000    5.349    0.001 v1.py:297(select_action)
+     1000    0.205    0.000  118.899    0.119 v1.py:311(rollout)
+     1000    0.148    0.000    5.031    0.005 v1.py:383(train2)
+        1    0.079    0.079  124.045  124.045 v1.py:454(train_all)
+    18000    0.026    0.000    0.154    0.000 v1.py:60(to_array)
+     6000    0.041    0.000    0.080    0.000 v1.py:81(to_state)
+     6000    0.023    0.000    0.239    0.000 v1.py:87(extract_time_state)
+    18000    0.116    0.000    0.137    0.000 {built-in method __new__ of type object at 0x55fb14c5f240}
+    30000    0.027    0.000    0.027    0.000 {built-in method _abc._abc_instancecheck}
+     15/3    0.000    0.000    0.000    0.000 {built-in method _abc._abc_subclasscheck}
+    18000    0.189    0.000    0.189    0.000 {built-in method _warnings.warn}
+    14000    1.676    0.000    1.676    0.000 {built-in method addmm}
+     7000    0.047    0.000    0.047    0.000 {built-in method broadcast_tensors}
+    12000    0.012    0.000    0.035    0.000 {built-in method builtins.all}
+        1    0.000    0.000  124.045  124.045 {built-in method builtins.exec}
+   745682    0.245    0.000    0.245    0.000 {built-in method builtins.getattr}
+     2000    0.001    0.000    0.001    0.000 {built-in method builtins.hasattr}
+  1229531    0.151    0.000    0.151    0.000 {built-in method builtins.id}
+ 24712075    2.806    0.000    2.844    0.000 {built-in method builtins.isinstance}
+   415841    0.080    0.000    0.080    0.000 {built-in method builtins.issubclass}
+  3998092    0.492    0.000    0.492    0.000 {built-in method builtins.len}
+    12000    0.088    0.000    0.088    0.000 {built-in method builtins.min}
+     6000    0.003    0.000    0.003    0.000 {built-in method builtins.setattr}
+    24000    0.412    0.000    0.534    0.000 {built-in method builtins.sum}
+     6000    0.067    0.000    0.067    0.000 {built-in method from_numpy}
+    12000    0.108    0.000    0.108    0.000 {built-in method lgamma}
+    12000    0.128    0.000    0.128    0.000 {built-in method log}
+     2007    0.001    0.000    0.001    0.000 {built-in method math.ceil}
+     2007    0.003    0.000    0.003    0.000 {built-in method math.log}
+     8000    0.003    0.000    0.003    0.000 {built-in method math.sqrt}
+     3000    0.066    0.000    0.066    0.000 {built-in method mean}
+     6000    0.079    0.000    0.079    0.000 {built-in method multinomial}
+    12000    0.032    0.000    0.032    0.000 {built-in method numpy.arange}
+  4603774    6.449    0.000    6.449    0.000 {built-in method numpy.array}
+  1295364    1.836    0.000   10.839    0.000 {built-in method numpy.core._multiarray_umath.implement_array_function}
+     8000    0.056    0.000    0.056    0.000 {built-in method ones_like}
+     7000    0.127    0.000    0.127    0.000 {built-in method relu}
+     1000    0.028    0.000    0.028    0.000 {built-in method stack}
+     6000    0.063    0.000    0.063    0.000 {built-in method sum}
+     4000    0.083    0.000    0.083    0.000 {built-in method tensor}
+     1000    0.001    0.000    0.001    0.000 {built-in method time.time}
+    22000    0.026    0.000    0.026    0.000 {built-in method torch._C._get_tracing_state}
+     1000    0.003    0.000    0.003    0.000 {built-in method torch._C._log_api_usage_once}
+     1000    0.031    0.000    0.031    0.000 {built-in method torch._C._nn.mse_loss}
+    12000    0.004    0.000    0.004    0.000 {built-in method torch._C.is_grad_enabled}
+    12000    0.004    0.000    0.004    0.000 {built-in method torch._C.set_grad_enabled}
+       16    0.000    0.000    0.000    0.000 {built-in method zeros_like}
+    84000    0.107    0.000    0.107    0.000 {method '__deepcopy__' of 'numpy.generic' objects}
+   327841    0.856    0.000    1.331    0.000 {method '__deepcopy__' of 'numpy.ndarray' objects}
+       59    0.000    0.000    0.000    0.000 {method 'add' of 'set' objects}
+    16000    0.111    0.000    0.111    0.000 {method 'add_' of 'torch._C._TensorBase' objects}
+     8000    0.119    0.000    0.119    0.000 {method 'addcdiv_' of 'torch._C._TensorBase' objects}
+     8000    0.052    0.000    0.052    0.000 {method 'addcmul_' of 'torch._C._TensorBase' objects}
+  2501887    0.283    0.000    0.283    0.000 {method 'append' of 'list' objects}
+     6000    0.016    0.000    0.016    0.000 {method 'argmax' of 'numpy.ndarray' objects}
+   321841    0.967    0.000    0.967    0.000 {method 'argmin' of 'numpy.ndarray' objects}
+   127328    0.010    0.000    0.010    0.000 {method 'bit_length' of 'int' objects}
+     6000    0.096    0.000    0.096    0.000 {method 'clamp' of 'torch._C._TensorBase' objects}
+     6000    0.052    0.000    0.052    0.000 {method 'clone' of 'torch._C._TensorBase' objects}
+     1000    0.002    0.000    0.002    0.000 {method 'detach' of 'torch._C._TensorBase' objects}
+     7992    0.005    0.000    0.005    0.000 {method 'detach_' of 'torch._C._TensorBase' objects}
+    26000    0.010    0.000    0.010    0.000 {method 'dim' of 'torch._C._TensorBase' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+     2000    0.018    0.000    0.018    0.000 {method 'double' of 'torch._C._TensorBase' objects}
+     6000    0.048    0.000    0.048    0.000 {method 'expand' of 'torch._C._TensorBase' objects}
+   321841    4.512    0.000    8.813    0.000 {method 'exponential' of 'numpy.random.mtrand.RandomState' objects}
+     6000    0.003    0.000    0.003    0.000 {method 'extend' of 'list' objects}
+  3916092    8.753    0.000   16.397    0.000 {method 'flatten' of 'numpy.ndarray' objects}
+     7000    0.081    0.000    0.081    0.000 {method 'float' of 'torch._C._TensorBase' objects}
+   957682    0.219    0.000    0.219    0.000 {method 'get' of 'dict' objects}
+   180844    0.024    0.000    0.024    0.000 {method 'getrandbits' of '_random.Random' objects}
+    12000    0.003    0.000    0.003    0.000 {method 'insert' of 'list' objects}
+     6000    0.018    0.000    0.018    0.000 {method 'item' of 'numpy.ndarray' objects}
+     1000    0.004    0.000    0.004    0.000 {method 'item' of 'torch._C._TensorBase' objects}
+   643682    0.129    0.000    0.129    0.000 {method 'items' of 'dict' objects}
+    16000    0.195    0.000    0.195    0.000 {method 'mul_' of 'torch._C._TensorBase' objects}
+     6000    0.001    0.000    0.001    0.000 {method 'ndimension' of 'torch._C._TensorBase' objects}
+     6000    0.033    0.000    0.033    0.000 {method 'new' of 'torch._C._TensorBase' objects}
+     2000    0.001    0.000    0.001    0.000 {method 'numel' of 'torch._C._TensorBase' objects}
+     6000    0.016    0.000    0.016    0.000 {method 'numpy' of 'torch._C._TensorBase' objects}
+     6000    0.030    0.000    0.030    0.000 {method 'permute' of 'torch._C._TensorBase' objects}
+     6000    0.006    0.000    0.006    0.000 {method 'pop' of 'list' objects}
+    12000    0.060    0.000    0.060    0.000 {method 'random' of 'numpy.random.mtrand.RandomState' objects}
+   967523    6.624    0.000    6.624    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+   971523    1.120    0.000    1.125    0.000 {method 'reshape' of 'numpy.ndarray' objects}
+    12000    0.091    0.000    0.091    0.000 {method 'reshape' of 'torch._C._TensorBase' objects}
+     2000    3.295    0.002    3.295    0.002 {method 'run_backward' of 'torch._C._EngineBase' objects}
+     6000    0.037    0.000    0.037    0.000 {method 'scatter_add_' of 'torch._C._TensorBase' objects}
+    14000    0.010    0.000    0.010    0.000 {method 'size' of 'torch._C._TensorBase' objects}
+     6000    0.094    0.000    0.094    0.000 {method 'softmax' of 'torch._C._TensorBase' objects}
+     8000    0.173    0.000    0.173    0.000 {method 'sqrt' of 'torch._C._TensorBase' objects}
+     2000    0.010    0.000    0.010    0.000 {method 'squeeze' of 'torch._C._TensorBase' objects}
+   321841    0.462    0.000    3.317    0.000 {method 'sum' of 'numpy.ndarray' objects}
+    24000    0.252    0.000    0.252    0.000 {method 'sum' of 'torch._C._TensorBase' objects}
+    14000    0.112    0.000    0.112    0.000 {method 't' of 'torch._C._TensorBase' objects}
+    12000    0.013    0.000    0.020    0.000 {method 'transpose' of 'numpy.ndarray' objects}
+     6000    0.050    0.000    0.050    0.000 {method 'type_as' of 'torch._C._TensorBase' objects}
+     6000    0.045    0.000    0.045    0.000 {method 'unsqueeze' of 'torch._C._TensorBase' objects}
+    44000    0.009    0.000    0.009    0.000 {method 'values' of 'collections.OrderedDict' objects}
+     5000    0.037    0.000    0.037    0.000 {method 'view' of 'torch._C._TensorBase' objects}
+    13992    0.073    0.000    0.073    0.000 {method 'zero_' of 'torch._C._TensorBase' objects}
