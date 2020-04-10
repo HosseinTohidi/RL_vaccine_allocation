@@ -25,6 +25,7 @@ from torch.distributions import Categorical, Multinomial
 import matplotlib.pyplot as plt
 plt.close()
 import argparse
+my_error = []
 parser = argparse.ArgumentParser(description='PyTorch REINFORCE example')
 parser.add_argument('--entropy-coef', type=float, default=0.01,
                     help='entropy term coefficient (default: 0.01)')
@@ -38,8 +39,9 @@ parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help='interval between training status logs (default: 10)')
 args, unknown = parser.parse_known_args()
 
-
 file_path = "./data/"
+myLog = open(file_path+"log.txt", "w")
+
 # read parameters from a file and create the initial_state of system
 file_name = "G-20.txt"
 number_of_age_group = 2
@@ -63,7 +65,7 @@ def to_array(matrix):
 vaccine_supply = 100
 number_of_weeks = 2
 maxTime =  14 * 15
-stepSize = 7 * number_of_weeks 
+stepSize = 7 * number_of_weeks * 15 
 num_steps = int(maxTime / stepSize)
 I0 = [int(totalPopulation[i] * initialinfeactions[i]) for i in range(groups_num)]
 S0 = [totalPopulation[i] - I0[i] for i in range(groups_num)]
@@ -82,7 +84,6 @@ def to_state(time_cmp,state):
     sol = time_cmp
     sol.extend(list(to_array(state)))
     return sol
-
 
 def extract_time_state(array_state):
     return (array_state[:num_steps], np.matrix(array_state[num_steps:]).reshape([groups_num, 6]))
@@ -188,6 +189,9 @@ def SEIR (state, totalPopulation, contact_rates, omega, gamma, H, RS, groups_num
     def norm_find_next_event(r_s, r_u, r_e, r_v, r_i, time):
         M0 = np.concatenate((r_s, r_u, r_e, r_v, r_i)).reshape([5, groups_num]).T  # M0 is a 2d array of size Age Group by 5 
         M1 = M0.flatten() # a vector of r_s, r_u,r_... for different age group
+        if sum(M1) ==0:
+            my_error.append(1)
+            return state, np.inf
         M2 = M1/sum(M1)
         M3 = M2.cumsum()
         rnd = np.random.rand()
@@ -227,8 +231,6 @@ def SEIR (state, totalPopulation, contact_rates, omega, gamma, H, RS, groups_num
         r_i = gamma*I/2 #/ totalPopulation 
         return norm_find_next_event(r_s, r_u, r_e, r_v, r_i, time)
 
-
-
     # main part of SEIR function
     counter = 0
     time_list = []
@@ -241,9 +243,7 @@ def SEIR (state, totalPopulation, contact_rates, omega, gamma, H, RS, groups_num
         counter +=1 
     #if plot: 
     #    myPlot(all_states, time_list)
-    return state#new_state
-
-
+    return state
     
 class env_new:
     def __init__(self, initial_state):
@@ -277,9 +277,9 @@ class env_new:
             termina_signal = False
         return self.state, sum(reward).item(), termina_signal
 
-
 print('(((((((((())))))))))))))))')    
 myenv = env_new(initial_state)
+
 
 len_state = 6* groups_num + num_steps 
 
@@ -310,15 +310,13 @@ class Critic(nn.Module):
         super(Critic, self).__init__()
         self.affine1 = nn.Linear(len_state, 256)
         self.affine2 = nn.Linear(256, 1)
-
     def forward(self, x):
         ''' do the forward pass and return a probability over actions
         Input:
                 x: state  -> shape: batch_size X 120
         returns:
                 v: value of being at x -> shape: batch_size 
-        '''
-        
+        '''       
         x = F.relu(self.affine1(x))
         v = self.affine2(x).squeeze()
         return v
@@ -331,17 +329,17 @@ critic = Critic()
 actor_optim = optim.Adam(actor.parameters(), lr=1e-3) #Reza: these lrs are ok for initial testing, but should be smaller for getting better results e.g. 1e-4
 critic_optim = optim.Adam(critic.parameters(), lr=1e-3)
 
-
 def select_action(state, variance = 1, temp = 10):
     # this function selects stochastic actions based on the policy probabilities    
     state = torch.from_numpy(np.array(state)).float().unsqueeze(0)   #Reza: this might be a bit faster torch.tensor(state,dtype=torch.float32).unsqueeze(0)
     action_scores = actor(state)
+    print(action_scores, file = myLog)
+    print(state)
     prob = F.softmax(action_scores/temp, dim=1) #
     #print('***',prob)
     m = Multinomial(vaccine_supply, prob[0]) #[0] 
     action = m.sample()
     log_prob = m.log_prob(action)
-    # entropy = -(log_prob * prob).sum(1, keepdim=True) #Reza: this is not correct calc for entorpy
     entropy = - torch.sum(torch.log(prob) * prob, axis=-1)
     return action.numpy(), log_prob, entropy
 
@@ -354,7 +352,7 @@ def rollout(env, pause=.2):
     while True:  # Don't infinite loop while learning
         # select an action
         action, log_prob, entropy = select_action(to_array(state))
-        print(action)
+        #print(action)
         if action_dict.get(tuple(action), 0 ) ==0:
             action_dict [tuple(action)] = 1
         else:
@@ -373,53 +371,9 @@ def rollout(env, pause=.2):
             
     return states, rewards, log_probs, entropies
 
+  
 #states, rewards, log_probs, entropies = batch_states, batch_rewards, batch_log_probs, batch_entropies
-def train(states,rewards,log_probs):  
-    '''
-    states: |batch| X |episode| X |state|, ex: 5 X 15 X 120
-    rewards:|batch| X |episod| ex: 5 X 15 
-    log_probs: |batch| X |episod|, ex: 5 X 15
-    '''                
-    rewards_path = []
-    log_probs_paths = [] 
-    avg_reward_path = []
-    for batch in range(len(rewards)):
-        R = 0
-        P = 0
-        for i in reversed(range(len(rewards[0]))):
-            R = rewards[batch][i] + args.gamma * R
-            #print('R:',R)
-            rewards_path.insert(0, R)         
-            P = log_probs[batch][i] + P
-            log_probs_paths.insert(0, P)
-            #print(P)
-        avg_reward_path.append(np.mean(rewards_path))
-    log_probs_paths = torch.stack(log_probs_paths)
-    #rewards_path: np.array(|batch|X|episod|): 5 X 15, each element is a reward value
-    #log_probs_paths:np.array(|batch|X|episod|): 5 X 15, each element is a tensor
-    rewards_path = torch.tensor(rewards_path) # tesnor of size 5 X 15
-    states = torch.tensor(states) # tesnr of size 5 X 15 X 120
-    #rewards_path = (rewards_path - rewards_path.mean()) / (rewards_path.std() + 1e-8)
-    #log_probs_paths = torch.stack(tuple(log_probs_paths.flatten())) # tensor of size 75    
-    value = critic(states.view(-1,len_state).float())  #.float is added because I got the following error     
-    # take a backward step for actor
-    actor_loss = -torch.mean(((rewards_path.view(batchSize*num_steps) -value.detach().squeeze()) * log_probs_paths))  #
-    actor_optim.zero_grad()
-    actor_loss.backward()
-    actor_optim.step()
-
-    # take a backward step for critic
-    loss_fn = torch.nn.MSELoss()
-    critic_loss = loss_fn(value.double(),rewards_path.view(batchSize*num_steps).double())  # added unsqueeze because of the warning
-    #print('********',critic_loss)
-    critic_optim.zero_grad()
-    critic_loss.backward()
-    critic_optim.step()
-    return value, np.mean(avg_reward_path)
-    
-#states, rewards, log_probs, entropies = batch_states, batch_rewards, batch_log_probs, batch_entropies
-
-def train2(states,rewards,log_probs, entropies):  # Hossein: updated (entropies_path)
+def train2(states,rewards,log_probs, entropies):  
     '''
     states: |batch| X |episode| X |state|, ex: 5 X 15 X 120
     rewards:|batch| X |episod| ex: 5 X 15 
@@ -432,7 +386,6 @@ def train2(states,rewards,log_probs, entropies):  # Hossein: updated (entropies_
     for batch in range(len(rewards)):
         R = 0
         P = 0
-        E = 0
         for i in reversed(range(len(rewards[0]))):
             R = rewards[batch][i] + args.gamma * R
 
@@ -440,16 +393,12 @@ def train2(states,rewards,log_probs, entropies):  # Hossein: updated (entropies_
             rewards_path.insert(0, R)         
             P = log_probs[batch][i] + P
             log_probs_paths.insert(0, P)
-            
-            E = entropies[batch][i] + E
-            entropies_path.insert(0, E)
 
             #print(P)
         avg_reward_path.append(np.mean(rewards_path))
-        #entropies_path.append(torch.mean(torch.stack(entropies[batch])))
+        entropies_path.append(torch.mean(torch.stack(entropies[batch])))
 
     log_probs_paths = torch.stack(log_probs_paths)
-    entropies_path  = torch.stack(entropies_path).squeeze() # added and line 413 commented!
     #rewards_path: np.array(|batch|X|episod|): 5 X 15, each element is a reward value
     #log_probs_paths:np.array(|batch|X|episod|): 5 X 15, each element is a tensor
     rewards_path = torch.tensor(rewards_path) # tesnor of size 5 X 15
@@ -459,7 +408,7 @@ def train2(states,rewards,log_probs, entropies):  # Hossein: updated (entropies_
     #log_probs_paths = torch.stack(tuple(log_probs_paths.flatten())) # tensor of size 75    
     value = critic(states.view(-1,len_state).float())  #.float is added because I got the following error     
     # take a backward step for actor
-    entropy_loss = torch.mean(entropies_path) #torch.stack(entropies_path)
+    entropy_loss = torch.mean(torch.stack(entropies_path))
     actor_loss = -torch.mean(((rewards_path.view(batchSize*num_steps) -value.detach().squeeze()) * log_probs_paths)-\
                              0 * entropy_loss #Reza: I set it to zero for testing the case when two groups are similar
                              ) #Reza: when two groups are similar, after 1000 train steps they converge to stochastic policy
@@ -488,7 +437,6 @@ def train2(states,rewards,log_probs, entropies):  # Hossein: updated (entropies_
     return result
 
 
-
 ##### for multi run
 batchSize = 32
 rws = []
@@ -514,17 +462,18 @@ def train_all(budget):
 
         if i_episode%20==0:
             print(i_episode, result)
+        if i_episode%100==0: 
+            print('actor norm:', torch.norm(torch.cat([i.flatten() for i in actor.parameters()])))
         # print(f'Episode {i_episode}\t average reward path: {round(avg_raward_path,2)}\t torch mean: {round(torch.mean(value).item(),2)} \telapsed time: {time.time()-t0}')
 
 # import cProfile
 # cProfile.run('train_all()')
-train_all(1000)
+train_all(100)
+myLog.close()
 
 import matplotlib.pyplot as plt
 plt.plot(rws)
 plt.plot(torchMean)
-
-
 
 def test(env):
     states = []
@@ -585,7 +534,7 @@ def test2(env, action, max_iter = 200, change_action = False):
 
 #avg_reward = []
 
-avg1 = test2(myenv, [0,0])
+#avg1 = test2(myenv, [0,0])
 ##avg2 = test2(myenv, [0,10])
 ##avg3 = test2(myenv, [10,0])
 ##avg4 = test2(myenv, [20,0])
@@ -593,18 +542,18 @@ avg1 = test2(myenv, [0,0])
 ##avg6 = test2(myenv, [30,0])
 ##avg7 = test2(myenv, [15,15])
 ##avg8 = test2(myenv, [50,50])
-avg9 = test2(myenv, [100,0])
-avg10 = test2(myenv, [0,100])
-avg11 = test2(myenv, [100,0], change_action=True)
-avg12 = test2(myenv, [50,50])
+#avg9 = test2(myenv, [100,0])
+#avg10 = test2(myenv, [0,100])
+#avg11 = test2(myenv, [100,0], change_action=True)
+#avg12 = test2(myenv, [50,50])
 #
 ##
 #plt.plot(avg1, label = '0,0')
 #plt.plot(avg9, label = '100,0')
-plt.plot(avg10, label = '0,100' )
-plt.plot(avg12, label = '50,50' )
-plt.plot(avg11, label = '100,0,change')
-plt.legend()
+#plt.plot(avg10, label = '0,100' )
+#plt.plot(avg12, label = '50,50' )
+#plt.plot(avg11, label = '100,0,change')
+#plt.legend()
 #
 #plt.plot(avg2, label = '0,10' )
 #plt.plot(avg1, label = '0,0')
@@ -614,3 +563,52 @@ plt.legend()
 #
 #
 #print(avg1,avg2,avg3)
+    
+
+def train(states,rewards,log_probs):  
+    '''
+    states: |batch| X |episode| X |state|, ex: 5 X 15 X 120
+    rewards:|batch| X |episod| ex: 5 X 15 
+    log_probs: |batch| X |episod|, ex: 5 X 15
+    '''                
+    rewards_path = []
+    log_probs_paths = [] 
+    avg_reward_path = []
+    for batch in range(len(rewards)):
+        R = 0
+        P = 0
+        for i in reversed(range(len(rewards[0]))):
+            R = rewards[batch][i] + args.gamma * R
+            #print('R:',R)
+            rewards_path.insert(0, R)         
+            P = log_probs[batch][i] + P
+            log_probs_paths.insert(0, P)
+            #print(P)
+        avg_reward_path.append(np.mean(rewards_path))
+    log_probs_paths = torch.stack(log_probs_paths)
+    #rewards_path: np.array(|batch|X|episod|): 5 X 15, each element is a reward value
+    #log_probs_paths:np.array(|batch|X|episod|): 5 X 15, each element is a tensor
+    rewards_path = torch.tensor(rewards_path) # tesnor of size 5 X 15
+    states = torch.tensor(states) # tesnr of size 5 X 15 X 120
+    #rewards_path = (rewards_path - rewards_path.mean()) / (rewards_path.std() + 1e-8)
+    #log_probs_paths = torch.stack(tuple(log_probs_paths.flatten())) # tensor of size 75    
+    value = critic(states.view(-1,len_state).float())  #.float is added because I got the following error     
+    # take a backward step for actor
+    actor_loss = -torch.mean(((rewards_path.view(batchSize*num_steps) -value.detach().squeeze()) * log_probs_paths))  #
+    actor_optim.zero_grad()
+    actor_loss.backward()
+    actor_optim.step()
+
+    # take a backward step for critic
+    loss_fn = torch.nn.MSELoss()
+    critic_loss = loss_fn(value.double(),rewards_path.view(batchSize*num_steps).double())  # added unsqueeze because of the warning
+    #print('********',critic_loss)
+    critic_optim.zero_grad()
+    critic_loss.backward()
+    critic_optim.step()
+    return value, np.mean(avg_reward_path)
+
+
+
+
+
