@@ -309,7 +309,7 @@ actor_optim = optim.Adam(actor.parameters(),
 critic_optim = optim.Adam(critic.parameters(), lr=1e-3)
 
 
-def select_action(state, variance=1, temp=10):
+def select_action(state, variance=1, temp=1):
     # this function selects stochastic actions based on the policy probabilities    
     # state = torch.from_numpy(np.array(state)).float().unsqueeze(0)   #Reza: this might be a bit faster torch.tensor(state,dtype=torch.float32).unsqueeze(0)
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
