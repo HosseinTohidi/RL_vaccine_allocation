@@ -24,9 +24,9 @@ import torch.optim as optim
 from torch.distributions import Categorical, Multinomial 
 import matplotlib.pyplot as plt
 plt.close()
-from joblib import Parallel, delayed
+# from joblib import Parallel, delayed
 from multiprocessing import cpu_count
-parallel = Parallel(n_jobs = cpu_count())
+# parallel = Parallel(n_jobs = cpu_count())
 import argparse
 my_error = []
 parser = argparse.ArgumentParser(description='PyTorch REINFORCE example')
@@ -69,7 +69,8 @@ class env:
                 
         return self.state, reward, True
 
-
+myenv = env(initial_state)
+myenv.reset()
 
 class Actor(nn.Module):
     def __init__(self):
