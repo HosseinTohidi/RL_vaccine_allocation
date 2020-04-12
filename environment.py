@@ -3,6 +3,7 @@ import argparse
 import copy
 import numpy as np
 
+
 class VaccineEnv(object):
     def __init__(self, state,
                  clock,
@@ -18,6 +19,16 @@ class VaccineEnv(object):
                  omega,
                  gamma
                  ):
+
+        """
+        state: (S, U, E, V, I, R)
+                S: susceptible
+                U: susceptible, but unsuccessfully vaccinated
+                E: exposed
+                V: exposed, but had been vaccinated
+                I: infected
+                R: recovered
+        """
         self.initial_state = copy.deepcopy(state)
         self.state = copy.deepcopy(state)  # len_state = 6* groups_num + num_steps
         self.clock = clock
@@ -186,6 +197,12 @@ if __name__ == '__main__':
                      309, 0, 0, 0, 0, 0,
                      1152, 0, 0, 0, 20, 0,
                      286, 0, 0, 0, 0, 0]
+
+    # initial_state = np.array([[160, 0, 0, 0, 0, 0],
+    #                           [544, 0, 0, 0, 15, 0],
+    #                           [309, 0, 0, 0, 0, 0],
+    #                           [1152, 0, 0, 0, 20, 0],
+    #                           [286, 0, 0, 0, 0, 0]])
     len_state = 6 * groups_num + num_steps
 
     # create environment
@@ -203,9 +220,8 @@ if __name__ == '__main__':
                      omega,
                      gamma
                      )
-    state = env.reset()  #TODO: state should be [5 (age_group) x 6 (dimension)]
+    state = env.reset()  # TODO: state should be [5 (age_group) x 6 (dimension)]
 
     for i in range(100):
-        env.step([20,20,20,20,20])
-    #TODO: Do a few steps. This gives me a division by zero error
-
+        env.step([20, 20, 20, 20, 20])
+    # TODO: Do a few steps. This gives me a division by zero error
