@@ -209,7 +209,7 @@ class env:
                 rates_coef = np.array(
                     [np.array(eta) / 3, np.array(eta), np.array(omega), np.array(omega), np.array(gamma) / 2])
                 M0 = ((np.array(self.state[num_steps:]).reshape(groups_num, 6)[:,
-                       :5]).T * rates_coef).T  # d/dt of different event, size: grousp_num X 6
+                       :5]) * rates_coef)  # d/dt of different event, size: grousp_num X 6
                 M1 = M0.flatten()
                 M2 = (M1 / sum(M1)).cumsum()
                 rnd = np.random.rand()
