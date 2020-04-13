@@ -9,7 +9,7 @@ import sys
 import pandas as pd
 import numpy as np
 import random
-# from myPackage.read_file import read_file
+from myPackage.read_file import read_file
 import copy
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -48,30 +48,30 @@ args, unknown = parser.parse_known_args()
 
 # device
 device = torch.device('cuda' if torch.cuda.is_available() and args.use_gpu
-                                   else 'cpu', args.gpu_num)
+                                   else 'cpu', 0) #args.gpu_num)
 
 file_path = "./data/"
 myLog = open(file_path + "log.txt", "w")
 
 # read parameters from a file and create the initial_state of system
 file_name = "G-20.txt"
-number_of_age_group = 5
-# groups_num, totalPopulation, initialinfeactions, contact_rates, vaccineEfficacy, omega, gamma, H, RS = read_file(file_path+file_name, 10000, num_age_group=number_of_age_group)
+number_of_age_group = 2
+groups_num, totalPopulation, initialinfeactions, contact_rates, vaccineEfficacy, omega, gamma, H, RS = read_file(file_path+file_name, 10000, num_age_group=number_of_age_group)
 
-
-groups_num = number_of_age_group
-totalPopulation = [160, 559, 309, 1172, 286]
-contact_rates = np.array([[0.65, 0.1, 0.05, 0.02, 0.],
-                          [0.43, 1., 0.14, 0.13, 0.01],
-                          [0.13, 0.06, 0.2, 0.07, 0.],
-                          [0.38, 0.56, 0.3, 0.38, 0.13],
-                          [0.03, 0.07, 0.04, 0.08, 0.17]])
-
-vaccineEfficacy = 0.85
-omega = np.array([0.2, 0.14, 0.13, 0.13, 0.17])
-gamma = np.array([0.435, 0.454, 0.327, 0.327, 0.327])
-H = np.array([0.835, 0.835, 0.835, 0.835, 0.835])
-RS = np.array([1.0, 1.0, 1.0, 0.85, 0.75])
+#
+#groups_num = number_of_age_group
+#totalPopulation = [160, 559, 309, 1172, 286]
+#contact_rates = np.array([[0.65, 0.1, 0.05, 0.02, 0.],
+#                          [0.43, 1., 0.14, 0.13, 0.01],
+#                          [0.13, 0.06, 0.2, 0.07, 0.],
+#                          [0.38, 0.56, 0.3, 0.38, 0.13],
+#                          [0.03, 0.07, 0.04, 0.08, 0.17]])
+#
+#vaccineEfficacy = 0.85
+#omega = np.array([0.2, 0.14, 0.13, 0.13, 0.17])
+#gamma = np.array([0.435, 0.454, 0.327, 0.327, 0.327])
+#H = np.array([0.835, 0.835, 0.835, 0.835, 0.835])
+#RS = np.array([1.0, 1.0, 1.0, 0.85, 0.75])
 
 
 # assign seeds
@@ -88,17 +88,17 @@ number_of_weeks = 2
 maxTime = 14 * 15
 stepSize = 7 * number_of_weeks
 num_steps = int(maxTime / stepSize)
-# I0 = [int(totalPopulation[i] * initialinfeactions[i]) for i in range(groups_num)]
-# I0[3] = 20
+I0 = [int(totalPopulation[i] * initialinfeactions[i]) for i in range(groups_num)]
+ #I0[3] = 20
 
-# S0 = [totalPopulation[i] - I0[i] for i in range(groups_num)]
-# E0 = [0 for i in range(groups_num)]
-# R0 = [0 for i in range(groups_num)]
-# U0 = [0 for i in range(groups_num)]        # group of vaccinated but not immuned
-# V0 = [0 for i in range(groups_num)]
-# initial_state0 = np.matrix([S0, U0, E0, V0, I0, R0]).T #state represented by a matrix of groups_num X 6
-# initial_state  = [0  for i in range(num_steps)]
-# initial_state.extend(list(to_array(initial_state0)))
+S0 = [totalPopulation[i] - I0[i] for i in range(groups_num)]
+E0 = [0 for i in range(groups_num)]
+R0 = [0 for i in range(groups_num)]
+U0 = [0 for i in range(groups_num)]        # group of vaccinated but not immuned
+V0 = [0 for i in range(groups_num)]
+initial_state0 = np.matrix([S0, U0, E0, V0, I0, R0]).T #state represented by a matrix of groups_num X 6
+initial_state  = [0  for i in range(num_steps)]
+initial_state.extend(list(to_array(initial_state0)))
 
 initial_state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                  160, 0, 0, 0, 0, 0,
@@ -207,27 +207,50 @@ class env:
                      in range(groups_num)]).reshape([groups_num, groups_num])
                 eta = eta_temp.sum(axis=1)
                 rates_coef = np.array(
-                    [np.array(eta) / 3, np.array(eta), np.array(omega), np.array(omega), np.array(gamma) / 2])
+                    [np.array(eta) / 3, np.array(eta), np.array(omega), np.array(omega), np.array(gamma) / 2]).T
                 M0 = ((np.array(self.state[num_steps:]).reshape(groups_num, 6)[:,
                        :5]) * rates_coef)  # d/dt of different event, size: grousp_num X 6
                 M1 = M0.flatten()
-                M2 = (M1 / sum(M1)).cumsum()
-                rnd = np.random.rand()
-                idx = sum(M2 <= rnd)  # which event occurs
+                non_zero_idx = np.nonzero(M1)[0]
+                if len(non_zero_idx) ==0:
+                    print('Warning: Early stopping')
+                    break
+                else:
+                    non_zero_M1 = np.array([M1[i] for i in non_zero_idx])
+                    M2 = (non_zero_M1 / sum(non_zero_M1)).cumsum()
+                    rnd = np.random.rand()
+                    idx = non_zero_idx[sum(M2 <= rnd)]  # which event occurs
+                    
+                    deltaT = np.random.exponential(1 / M1[idx])
+                    # update the state based on the event on idx
+                    group, compartment = idx // 5, idx % 5
+                    # print(group, compartment)
+                    if compartment in {0, 1}:  # s or u occurs
+                        self.state[num_steps + group * 6 + compartment + 2] += 1
+                    if compartment in {2, 3}:  # e or v occurs
+                        self.state[num_steps + group * 6 + 4] += 1
+                    if compartment == 4:
+                        self.state[num_steps + group * 6 + 5] += 1  # i occur
+                    self.state[num_steps + group * 6 + compartment] -= 1
+                    timer += deltaT
+                    
+                #M2 = (M1 / sum(M1)).cumsum()
+                #rnd = np.random.rand()
+                #idx = sum(M2 <= rnd)  # which event occurs
                 # print(M2, idx, M1[idx])
                 # idxList.append(idx)  # delete after finishing the test
-                deltaT = np.random.exponential(1 / M1[idx])
-                # update the state based on the event on idx
-                group, compartment = idx // 5, idx % 5
-                # print(group, compartment)
-                if compartment in {0, 1}:  # s or u occurs
-                    self.state[num_steps + group * 6 + compartment + 2] += 1
-                if compartment in {2, 3}:  # e or v occurs
-                    self.state[num_steps + group * 6 + 4] += 1
-                if compartment == 4:
-                    self.state[num_steps + group * 6 + 5] += 1  # i occur
-                self.state[num_steps + group * 6 + compartment] -= 1
-                timer += deltaT
+#                deltaT = np.random.exponential(1 / M1[idx])
+#                # update the state based on the event on idx
+#                group, compartment = idx // 5, idx % 5
+#                # print(group, compartment)
+#                if compartment in {0, 1}:  # s or u occurs
+#                    self.state[num_steps + group * 6 + compartment + 2] += 1
+#                if compartment in {2, 3}:  # e or v occurs
+#                    self.state[num_steps + group * 6 + 4] += 1
+#                if compartment == 4:
+#                    self.state[num_steps + group * 6 + 5] += 1  # i occur
+#                self.state[num_steps + group * 6 + compartment] -= 1
+#                timer += deltaT
             # states.append(self.state[num_steps:])
 
             # update time component of the state
@@ -413,7 +436,7 @@ def train2(states, rewards, log_probs, entropies):
 
 
 ##### for multi run
-batchSize = 2
+batchSize = 32
 rws = []
 torchMean = []
 

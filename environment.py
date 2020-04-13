@@ -4,7 +4,8 @@ import copy
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from myPackage.read_file import read_file
+file_path = "./data/"
 
 def myPlot(states, time_list, plot_shape=[]):
     s0, u0, e0, v0, i0, r0 = [], [], [], [], [], []
@@ -99,6 +100,8 @@ class VaccineEnv(object):
         |-----------------------------------------------------------------------------------                   
         | Main procedures:
         |-----------------------------------------------------------------------------------                   
+        |  - a checking point is added to the step function to ensure the model does not run after the MaxTime is reached.
+        |-----------------------------------------------------------------------------------                   
         |  - flatten the self.state and keep a deep copy of it
         |       old_state: the value of the state when the function is called. 
         |                 -> size = 1 X 6* groups_num
@@ -150,6 +153,9 @@ class VaccineEnv(object):
         |----------------------------------------------------------------------------------- 
                 
         '''
+        if self.clock > maxTime:
+            print('Warning: No more step is allowed! You have reached to the end of the flu season.')
+            return self.state, 0, True
         # TODO:clean the step function and add a short comments for each update and variable.
         old_state = copy.deepcopy(self.state).flatten()
         current_state = copy.deepcopy(old_state)
@@ -174,6 +180,8 @@ class VaccineEnv(object):
         # simulation (SUEVIR)
         timer = 0
         time_list = []
+        states = []
+        states.append(old_state)
         while timer <= self.stepSize:
             time_list.append(timer)
             # if SUEVIR compartments are all zero, no event can occurs
@@ -189,26 +197,34 @@ class VaccineEnv(object):
                      in range(self.groups_num)]).reshape([self.groups_num, self.groups_num])
                 eta = eta_temp.sum(axis=1)
                 rates_coef = np.array(
-                    [np.array(eta) / 3, np.array(eta) / 3,
-                     np.array(self.omega), np.array(self.omega), np.array(self.gamma) / 2])
+                    [np.array(eta) / 2, np.array(eta) / 2,
+                     np.array(self.omega), np.array(self.omega), np.array(self.gamma) / 2]).T
                 M0 = ((np.array(current_state).reshape(self.groups_num, 6)[:,
-                       :5]) * rates_coef)  # d/dt of different event, size: grousp_num X 6
+                       :5]) * rates_coef)  # d/dt of different event, size: grousp_num X 5
                 M1 = M0.flatten()
-                M2 = (M1 / sum(M1)).cumsum()
-                rnd = np.random.rand()
-                idx = sum(M2 <= rnd)  # which event occurs
-                deltaT = np.random.exponential(1 / M1[idx])
-                # update the state based on the event on idx
-                group, compartment = idx // 5, idx % 5
-                if compartment in {0, 1}:  # s or u occurs
-                    current_state[group * 6 + compartment + 2] += 1
-                if compartment in {2, 3}:  # e or v occurs
-                    current_state[group * 6 + 4] += 1
-                if compartment == 4:
-                    current_state[group * 6 + 5] += 1  # i occur
-                current_state[group * 6 + compartment] -= 1
-                timer += deltaT
-
+                non_zero_idx = np.nonzero(M1)[0]
+                if len(non_zero_idx) ==0:
+                    print('Warning: Early stopping')
+                    break
+                else:
+                    non_zero_M1 = np.array([M1[i] for i in non_zero_idx])
+                    M2 = (non_zero_M1 / sum(non_zero_M1)).cumsum()
+                    rnd = np.random.rand()
+                    idx = non_zero_idx[sum(M2 <= rnd)]  # which event occurs
+                    deltaT = np.random.exponential(1 / M1[idx])
+                    # update the state based on the event on idx
+                    group, compartment = idx // 5, idx % 5
+                    if compartment in {0, 1}:  # s or u occurs
+                        current_state[group * 6 + compartment + 2] += 1
+                    if compartment in {2, 3}:  # e or v occurs
+                        current_state[group * 6 + 4] += 1
+                    if compartment == 4:
+                        current_state[group * 6 + 5] += 1  # i occur
+                    current_state[group * 6 + compartment] -= 1
+                    timer += deltaT
+                    # for plotting
+                    #current_state2 = copy.deepcopy(current_state)
+                    #states.append(current_state2)
       
         #update the state
         self.state = current_state.reshape(self.groups_num, 6)
@@ -223,7 +239,7 @@ class VaccineEnv(object):
             termina_signal = True
         else:
             termina_signal = False
-
+        #myPlot(states,time_list,[2,3])
         return self.state, reward, termina_signal
 
 
@@ -256,38 +272,44 @@ if __name__ == '__main__':
     # Environment config
     # read parameters from a file and create the initial_state of system
     file_name = "G-20.txt"
-    # groups_num, totalPopulation, initialinfeactions, contact_rates, vaccineEfficacy, omega, gamma, H, RS = read_file(file_path+file_name, 10000, num_age_group=number_of_age_group)
-
+    
     vaccine_supply = 100
     number_of_weeks = 2
     maxTime = 14 * 15
     stepSize = 7 * number_of_weeks
     num_steps = int(maxTime / stepSize)
-    groups_num = number_of_age_group = 5
-    totalPopulation = [160, 559, 309, 1172, 286]
-    contact_rates = np.array([[0.65, 0.1, 0.05, 0.02, 0.],
-                              [0.43, 1., 0.14, 0.13, 0.01],
-                              [0.13, 0.06, 0.2, 0.07, 0.],
-                              [0.38, 0.56, 0.3, 0.38, 0.13],
-                              [0.03, 0.07, 0.04, 0.08, 0.17]])
+    groups_num = number_of_age_group = 3  #5
+    
+    # if we want to read from file
+    groups_num, totalPopulation, initialinfeactions, contact_rates, vaccineEfficacy, omega, gamma, H, RS = read_file(file_path+file_name, 10000, num_age_group=number_of_age_group)
+   
+    I0 = [int(totalPopulation[i] * initialinfeactions[i]) for i in range(groups_num)]
+     #I0[3] = 20 #adding more infected in begining if needed    
+    S0 = [totalPopulation[i] - I0[i] for i in range(groups_num)]
+    E0 = [0 for i in range(groups_num)]
+    R0 = [0 for i in range(groups_num)]
+    U0 = [0 for i in range(groups_num)]  # group of vaccinated but not immuned
+    V0 = [0 for i in range(groups_num)]
+    initial_state = np.array([S0, U0, E0, V0, I0, R0]).T
 
-    vaccineEfficacy = 0.85
-    omega = np.array([0.2, 0.14, 0.13, 0.13, 0.17])
-    gamma = np.array([0.435, 0.454, 0.327, 0.327, 0.327])
-    H = np.array([0.835, 0.835, 0.835, 0.835, 0.835])
-    RS = np.array([1.0, 1.0, 1.0, 0.85, 0.75])
-#    initial_state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-#                     160, 0, 0, 0, 0, 0,
-#                     544, 0, 0, 0, 15, 0,
-#                     309, 0, 0, 0, 0, 0,
-#                     1152, 0, 0, 0, 20, 0,
-#                     286, 0, 0, 0, 0, 0]
-
-    initial_state = np.array([[160, 0, 0, 0, 0, 0],
-                              [544, 0, 0, 0, 15, 0],
-                              [309, 0, 0, 0, 0, 0],
-                              [1152, 0, 0, 0, 20, 0],
-                              [286, 0, 0, 0, 0, 0]])
+    # if we want to manually set params 
+#    totalPopulation = [160, 559, 309, 1172, 286]
+#    contact_rates = np.array([[0.65, 0.1, 0.05, 0.02, 0.],
+#                              [0.43, 1., 0.14, 0.13, 0.01],
+#                              [0.13, 0.06, 0.2, 0.07, 0.],
+#                              [0.38, 0.56, 0.3, 0.38, 0.13],
+#                              [0.03, 0.07, 0.04, 0.08, 0.17]])
+#
+#    vaccineEfficacy = 0.85
+#    omega = np.array([0.2, 0.14, 0.13, 0.13, 0.17])
+#    gamma = np.array([0.435, 0.454, 0.327, 0.327, 0.327])
+#    H = np.array([0.835, 0.835, 0.835, 0.835, 0.835])
+#    RS = np.array([1.0, 1.0, 1.0, 0.85, 0.75])
+#    initial_state = np.array([[160, 0, 0, 0, 0, 0],
+#                              [544, 0, 0, 0, 15, 0],
+#                              [309, 0, 0, 0, 0, 0],
+#                              [1152, 0, 0, 0, 20, 0],
+#                              [286, 0, 0, 0, 0, 0]])
     len_state = 6 * groups_num
 
     # create environment
@@ -306,7 +328,8 @@ if __name__ == '__main__':
                      gamma
                      )
     state = env.reset()  
+    print(state)
 
     for i in range(100):
-        env.step([20, 20, 20, 20, 20])
+        print(env.step([20 for i in range(groups_num)]))
 
