@@ -153,7 +153,7 @@ class VaccineEnv(object):
         |----------------------------------------------------------------------------------- 
                 
         '''
-        if self.clock > maxTime:
+        if self.clock >= self.maxTime:
             print('Warning: No more step is allowed! You have reached to the end of the flu season.')
             return self.state, 0, True
         # TODO:clean the step function and add a short comments for each update and variable.
@@ -281,6 +281,7 @@ if __name__ == '__main__':
     groups_num = number_of_age_group = 3  #5
     
     # if we want to read from file
+
     groups_num, totalPopulation, initialinfeactions, contact_rates, vaccineEfficacy, omega, gamma, H, RS = read_file(file_path+file_name, 10000, num_age_group=number_of_age_group)
    
     I0 = [int(totalPopulation[i] * initialinfeactions[i]) for i in range(groups_num)]
@@ -330,6 +331,6 @@ if __name__ == '__main__':
     state = env.reset()  
     print(state)
 
-    for i in range(100):
+    for i in range(15):
         print(env.step([20 for i in range(groups_num)]))
 
