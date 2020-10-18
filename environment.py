@@ -284,6 +284,7 @@ if __name__ == '__main__':
     groups_num = number_of_age_group = 20  #5
     
     # if we want to read from file
+
     groups_num, totalPopulation, initialinfeactions, contact_rates, vaccineEfficacy, omega, gamma, H, RS = read_file(file_path+file_name, 10000, num_age_group=number_of_age_group)
    
     I0 = [int(totalPopulation[i] * initialinfeactions[i]) for i in range(groups_num)]
@@ -333,6 +334,11 @@ if __name__ == '__main__':
     state = env.reset()  
     print(state)
 
+<<<<<<< HEAD
     for i in range(1):
         print(env.step([0 for i in range(groups_num)]))
+=======
+    for i in range(15):
+        print(env.step([20 for i in range(groups_num)]))
+>>>>>>> 9932e45e89fa814801274052de15d5390d968395
 
