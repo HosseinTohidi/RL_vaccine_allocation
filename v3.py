@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     # device
     device = torch.device('cuda' if torch.cuda.is_available() and args.use_gpu
-                          else 'cpu', args.gpu_num)
+                          else 'cpu', 0) #ahvargs.gpu_num)
     args.device = device
 
     # assign seeds
@@ -110,13 +110,12 @@ if __name__ == '__main__':
     gamma = np.array([0.435, 0.454, 0.327, 0.327, 0.327])
     H = np.array([0.835, 0.835, 0.835, 0.835, 0.835])
     RS = np.array([1.0, 1.0, 1.0, 0.85, 0.75])
-    initial_state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                     160, 0, 0, 0, 0, 0,
-                     544, 0, 0, 0, 15, 0,
-                     309, 0, 0, 0, 0, 0,
-                     1152, 0, 0, 0, 20, 0,
-                     286, 0, 0, 0, 0, 0]
-    len_state = 6 * groups_num + num_steps
+    initial_state = [[160, 0, 0, 0, 0,  0],
+                     [544, 0, 0, 0, 15, 0],
+                     [309, 0, 0, 0, 0, 0 ],
+                     [1152, 0, 0, 0, 20,0],
+                     [286, 0, 0, 0, 0, 0 ]]
+    len_state = 6 * groups_num
 
 
 
@@ -129,6 +128,7 @@ if __name__ == '__main__':
                  vaccineEfficacy,
                  stepSize,
                  contact_rates,
+                 maxTime,
                  H,
                  RS,
                  omega,

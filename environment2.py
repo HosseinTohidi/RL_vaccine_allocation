@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct 13 21:00:00 2020
+
+@author: atohidi
+"""
+
 # from myPackage.read_file import read_file
 import argparse
 import copy
@@ -173,8 +180,11 @@ class VaccineEnv(object):
                 current_state[i * 6 + 0], current_state[i * 6 + 2] = 0, 0
             else:
                 rnd_idx = np.random.choice(np.arange(pop), int(action[i]), replace=False)
-                v_s = sum(rnd_idx <= current_state[i * 6 + 0])
-                success = int(v_s * self.vaccineEfficacy)
+                v_s = sum(rnd_idx < current_state[i * 6 + 0])
+                rnds = np.random.random(v_s)
+                success = sum(rnds<=self.vaccineEfficacy)
+                
+               # success = int(v_s * self.vaccineEfficacy)
                 current_state[i * 6 + 0] -= v_s #success
                 current_state[i * 6 + 1] += (v_s - success)
                 current_state[i * 6 + 2] -= (action[i] - v_s)
@@ -213,7 +223,7 @@ class VaccineEnv(object):
                     M2 = (non_zero_M1 / sum(non_zero_M1)).cumsum()
                     rnd = np.random.rand()
                     idx = non_zero_idx[sum(M2 <= rnd)]  # which event occurs
-                   # print(M1[idx])
+                    #print(M1[idx])
                     deltaT = np.random.exponential(1 / M1[idx])
                     # update the state based on the event on idx
                     group, compartment = idx // 5, idx % 5
